@@ -118,7 +118,7 @@ class DataCal(DataTrade):
 
         return df
 
-    def gen_graphs(self):
+    def gen_graphs_nuti_data(self):
         cols = [
             "total_calories",
             "total_fats",
@@ -146,4 +146,40 @@ class DataCal(DataTrade):
             .properties(width="container")
         )
 
+        return chart
+    
+    def gen_graphs_price_change(self) -> alt.Chart:
+
+        price_df = self.gen_price_rankings()
+
+        imports = price_df[["hs4", "prev_year_imports"]]
+        exports = price_df[["hs4", "prev_year_exports"]]
+        
+        df_imports = pl.DataFrame({
+            "HS4": imports["hs4"].to_list(),
+            "Type": "Import",
+            "Percent Change in Price": imports["prev_year_imports"]
+        })
+
+        df_exports = pl.DataFrame({
+            "HS4": exports["hs4"].to_list(),
+            "Type": "Export",
+            "Percent Change in Price": exports["prev_year_exports"]
+        })
+
+        df = pl.concat([df_imports, df_exports]).drop_nans()
+        df = df.sort(by="Percent Change in Price", descending=True)
+
+        # TODO: Fix sorting (???)
+        chart = (
+            alt.Chart(df)
+            .mark_bar()
+            .encode(
+                x=alt.X("HS4:S").sort("y"),
+                y="Percent Change in Price:N",
+                color="Type"
+            )
+            .properties(width="container")
+        )
+        
         return chart
